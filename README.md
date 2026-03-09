@@ -1,33 +1,34 @@
+# Sorghum-grainmold-haplokmer-gwas
+
+Reproducible analysis pipeline for SNP- and haplotype-window (“Haplo-kmer”) mixed-model GWAS, multi-trait hotspot mapping, and targeted Chr5 robustness analyses in the Sorghum Association Panel.
+
 ## Data Inputs (Not Included)
 
-This repository provides the full analysis code and workflow logic, but does **not** redistribute the underlying raw genotype and phenotype source files. 
-This is intentional to (i) respect third-party redistribution policies, (ii) avoid propagating legacy copies of datasets with uncertain provenance, and (iii) keep the repository lightweight. Users must obtain the input data from the original sources (or equivalent authorized access) and place them locally before running the pipeline.
+This repository provides the full analysis code and workflow logic, but does **not** redistribute the underlying raw genotype and phenotype source files. This is intentional to (i) respect third-party redistribution policies, (ii) avoid propagating legacy copies of datasets with uncertain provenance, and (iii) keep the repository lightweight. Users must obtain the input data from the original sources (or equivalent authorized access) and place them locally before running the pipeline.
 
 ### 1) Genotypes (SAP GBS; HapMap)
-Genotypes were derived from the Sorghum Association Panel (SAP) GBS resource distributed in HapMap format (Morris et al., 2013; https://doi.org/10.1073/pnas.121598511). 
-Because redistribution terms and hosting locations for legacy HapMap releases may vary over time, the repository does not include any HapMap files or derived genotype archives. 
-Users should obtain the SAP HapMap genotype file from the original provider/hosted resource associated with Morris et al. (2013), or a formally equivalent public mirror where permitted (https://www.morrislab.org/data).
+Genotypes were derived from the Sorghum Association Panel (SAP) GBS resource distributed in HapMap format (Morris et al., 2013). Because redistribution terms and hosting locations for legacy HapMap releases may vary over time, the repository does not include any HapMap files or derived genotype archives. Users should obtain the SAP HapMap genotype file from the original provider or hosted resource associated with Morris et al. (2013), or a formally equivalent public mirror where permitted.
 
 **Expected local placement (example):**
-- `data_raw/SAP_HapMap.txt`  *(or an equivalent HapMap file path you specify when running scripts)*
+- `data_raw/SAP_HapMap.txt` *(or an equivalent HapMap file path you specify when running scripts)*
 
-### 2) Grain mold phenotypes (SAP; Prom et al. 2020; https://doi.org/10.1007/s10658-020-02036-3; framework)
+### 2) Grain mold phenotypes (SAP; Prom et al. 2020 framework)
 Grain mold phenotypes were compiled as an **analysis-ready summary table (mean scores)** following the evaluation framework described by Prom et al. (2020).
 
 **Availability for reproducibility:**  
-The exact analysis-ready phenotype table used in this study (including any cleaning for duplicated/misaligned rows) is provided with the manuscript as **Supplementary Data S1**. This repository therefore does not redistribute the grain mold phenotype spreadsheet on GitHub.
+The exact analysis-ready phenotype table used in this study (including any cleaning for duplicated or misaligned rows) is provided with the manuscript as **Supplementary Data S1**. This repository therefore does not redistribute the grain mold phenotype spreadsheet on GitHub.
 
 **Expected local placement (if running the pipeline):**
 - `data_raw/Grain_mold_score.xlsx` *(obtained from Supplementary Data S1 or author-provided copy)*
 
-### 3) Anthracnose phenotypes (SAP; Prom et al. 2019; https://doi.org/10.1007/s00122-019-03285-5)
-Anthracnose phenotypes were obtained from the supplementary dataset of Prom et al. (2019, Theoretical and Applied Genetics). Users should download the ESM spreadsheet from the publisher’s site and place it locally.
+### 3) Anthracnose phenotypes (SAP; Prom et al. 2019)
+Anthracnose phenotypes were obtained from the supplementary dataset of Prom et al. (2019, *Theoretical and Applied Genetics*). Users should download the ESM spreadsheet from the publisher’s site and place it locally.
 
 **Expected local placement (example):**
 - `data_raw/122_2019_3285_MOESM1_ESM.xlsx`
 
 ### 4) Reference annotation (Sorghum bicolor v3.1.1)
-Gene model coordinates and functional deflines are used for nearest-gene mapping and table annotation. These files are not redistributed here. Users should obtain the Sorghum bicolor v3.1.1 GFF3 and associated annotation/defline files from the relevant public resource (e.g., Phytozome/JGI or an authorized distribution).
+Gene model coordinates and functional deflines are used for nearest-gene mapping and table annotation. These files are not redistributed here. Users should obtain the Sorghum bicolor v3.1.1 GFF3 and associated annotation/defline files from the relevant public resource (for example, Phytozome/JGI or an authorized distribution).
 
 **Expected local placement (example):**
 - `data_raw/Sbicolor_454_v3.1.1.gene.gff3.gz`
@@ -35,85 +36,113 @@ Gene model coordinates and functional deflines are used for nearest-gene mapping
 - `data_raw/Sbicolor_454_v3.1.1.P14.annotation_info.txt.gz`
 
 ### Reproducible outputs and manuscript tables
-All manuscript tables and summary outputs are generated by the scripts in `scripts/`. In particular, the submitted manuscript includes an author-generated workbook (**Supplementary Data S1**) containing the standardized outputs produced by this pipeline. The repository is designed so that, given access to the above inputs, users can regenerate the same analysis products.
+All manuscript tables and summary outputs are generated by the scripts in this repository. In particular, the submitted manuscript includes an author-generated workbook (**Supplementary Data S1**) containing standardized outputs produced by this pipeline. Given access to the above inputs, users can regenerate the same core analysis products.
+
+## Repository layout
+
+All Python scripts in this repository are currently stored at the **repository root** (not in a separate `scripts/` directory). Run commands from the project root accordingly.
 
 ## Environment
-Recommended: conda environment + pip (Windows ok).
+
+Recommended: conda environment on Windows, macOS, or Linux.
 
 Example minimal dependencies:
 - python (>=3.10)
-- numpy, pandas, scipy
+- numpy
+- pandas
+- scipy
 - scikit-learn
 - matplotlib
-- openpyxl (for Excel outputs)
+- openpyxl
 
 ## Core pipeline (analysis + tables)
-Run from the project root:
+
+Run all commands from the project root.
 
 ### 0) Create folders
 ```bash
 mkdir data_raw data outputs
+```
 
-1) Build phenotype TSVs
+### 1) Build phenotype TSVs
+
 Grain mold:
-python scripts/01_clean_phenotypes.py --input data_raw/Grain_mold_score.xlsx --mode grain_mold --out data/01_pheno_grain_mold.tsv
-
-Grain mold phenotypes used here are an analysis-ready summary table (mean scores) derived from field evaluations. The repository does not distribute replicate-level raw ratings. The exact analysis-ready phenotype TSVs used in this study are provided with the manuscript as Supplementary Data S1.
-
+```bash
+python 01_clean_phenotypes.py --input data_raw/Grain_mold_score.xlsx --mode grain_mold --out data/01_pheno_grain_mold.tsv
+```
 
 Anthracnose:
-python scripts/01_clean_phenotypes.py --input data_raw/122_2019_3285_MOESM1_ESM.xlsx --mode tag2019_anthracnose --out data/01_pheno_anthracnose.tsv
+```bash
+python 01_clean_phenotypes.py --input data_raw/122_2019_3285_MOESM1_ESM.xlsx --mode tag2019_anthracnose --out data/01_pheno_anthracnose.tsv
 python -c "import pandas as pd; df=pd.read_csv('data/01_pheno_anthracnose.tsv',sep='\t'); out=df[['sample_id','anthracnose_avg_score']].rename(columns={'anthracnose_avg_score':'anthracnose'}); out.to_csv('data/01_pheno_anthracnose_clean.tsv',sep='\t',index=False)"
+```
 
-2) Build genotype NPZ (if starting from HapMap)
-python scripts/02_hapmap_to_numeric.py --input data_raw/<SAP_HAPMAP_FILE>.txt --out data/02_snp_matrix.npz
-python scripts/03_filter_snps.py --geno-npz data/02_snp_matrix.npz --out data/03_snp_matrix.filtered.npz --maf 0.05 --max_missing 0.15
-(If you already have 03_snp_matrix.filtered.npz, you can skip steps above.)
+### 2) Build genotype NPZ (if starting from HapMap)
+```bash
+python 02_hapmap_to_numeric.py --input data_raw/SAP_HapMap.txt --out data/02_snp_matrix.npz
+python 03_filter_snps.py --geno-npz data/02_snp_matrix.npz --out data/03_snp_matrix.filtered.npz --maf 0.05 --max_missing 0.15
+```
 
-3) Compute covariates (kinship + PCs)
-python scripts/04_compute_kinship_pcs.py --geno-npz data/03_snp_matrix.filtered.npz --out data/04_covariates.npz
+If you already have `data/03_snp_matrix.filtered.npz`, you can skip step 2.
 
-4) SNP GWAS (6 traits)
-python scripts/05_emmax_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait A   --out outputs/05_gwas_snp_grainmold_A.tsv.gz
-python scripts/05_emmax_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M   --out outputs/05_gwas_snp_grainmold_M.tsv.gz
-python scripts/05_emmax_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait C   --out outputs/05_gwas_snp_grainmold_C.tsv.gz
-python scripts/05_emmax_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait A-C --out outputs/05_gwas_snp_grainmold_AminusC.tsv.gz
-python scripts/05_emmax_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M-C --out outputs/05_gwas_snp_grainmold_MminusC.tsv.gz
-python scripts/05_emmax_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_anthracnose_clean.tsv --trait anthracnose --out outputs/05_gwas_snp_anthracnose.tsv.gz
+### 3) Compute covariates (kinship + PCs)
+```bash
+python 04_compute_kinship_pcs.py --geno-npz data/03_snp_matrix.filtered.npz --out data/04_covariates.npz
+```
 
-5) Haplo-kmer GWAS (k=7 windows; 6 traits)
-python scripts/06_haplotype_kmer_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait A   --k-snps 7 --out outputs/06_gwas_haplokmer_grainmold_A_k7.tsv.gz
-python scripts/06_haplotype_kmer_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M   --k-snps 7 --out outputs/06_gwas_haplokmer_grainmold_M_k7.tsv.gz
-python scripts/06_haplotype_kmer_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait C   --k-snps 7 --out outputs/06_gwas_haplokmer_grainmold_C_k7.tsv.gz
-python scripts/06_haplotype_kmer_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait A-C --k-snps 7 --out outputs/06_gwas_haplokmer_grainmold_AminusC_k7.tsv.gz
-python scripts/06_haplotype_kmer_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M-C --k-snps 7 --out outputs/06_gwas_haplokmer_grainmold_MminusC_k7.tsv.gz
-python scripts/06_haplotype_kmer_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_anthracnose_clean.tsv --trait anthracnose --k-snps 7 --out outputs/06_gwas_haplokmer_anthracnose_k7.tsv.gz
+### 4) SNP GWAS (6 traits)
+```bash
+python 05_emmax_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait A --out outputs/05_gwas_snp_grainmold_A.tsv.gz
+python 05_emmax_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M --out outputs/05_gwas_snp_grainmold_M.tsv.gz
+python 05_emmax_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait C --out outputs/05_gwas_snp_grainmold_C.tsv.gz
+python 05_emmax_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait A-C --out outputs/05_gwas_snp_grainmold_AminusC.tsv.gz
+python 05_emmax_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M-C --out outputs/05_gwas_snp_grainmold_MminusC.tsv.gz
+python 05_emmax_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_anthracnose_clean.tsv --trait anthracnose --out outputs/05_gwas_snp_anthracnose.tsv.gz
+```
 
-6) Core hotspots + permutation null (operational threshold)
-python scripts/15_permutation_core_hotspots.py --glob "outputs/05_gwas_snp_*.tsv.gz" --glob "outputs/06_gwas_haplokmer_*.tsv.gz" --select p --p_thresh 5e-4 --window 250000 --core_traits 3 --core_methods 2 --nperm 1000 --seed 1 --out_prefix outputs/15_strength_p5e4_w250kb_core3
+### 5) Haplo-kmer GWAS (*k* = 7 windows; 6 traits)
+```bash
+python 06_haplotype_kmer_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait A --k-snps 7 --out outputs/06_gwas_haplokmer_grainmold_A_k7.tsv.gz
+python 06_haplotype_kmer_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M --k-snps 7 --out outputs/06_gwas_haplokmer_grainmold_M_k7.tsv.gz
+python 06_haplotype_kmer_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait C --k-snps 7 --out outputs/06_gwas_haplokmer_grainmold_C_k7.tsv.gz
+python 06_haplotype_kmer_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait A-C --k-snps 7 --out outputs/06_gwas_haplokmer_grainmold_AminusC_k7.tsv.gz
+python 06_haplotype_kmer_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M-C --k-snps 7 --out outputs/06_gwas_haplokmer_grainmold_MminusC_k7.tsv.gz
+python 06_haplotype_kmer_gwas.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_anthracnose_clean.tsv --trait anthracnose --k-snps 7 --out outputs/06_gwas_haplokmer_anthracnose_k7.tsv.gz
+```
 
-7) Core interval decomposition (table-ready outputs)
-python scripts/24_core_hotspot_decomposition.py --glob "outputs/05_gwas_snp_*.tsv.gz" --glob "outputs/06_gwas_haplokmer_*.tsv.gz" --select p --p_thresh 5e-4 --window 250000 --core_traits 3 --core_methods 2 --out_prefix outputs/24_core_p5e4_core3
+### 6) Core hotspots + permutation null
+Operational threshold used in the manuscript:
+```bash
+python 15_permutation_core_hotspots.py --glob "outputs/05_gwas_snp_*.tsv.gz" --glob "outputs/06_gwas_haplokmer_*.tsv.gz" --select p --p_thresh 5e-4 --window 250000 --core_traits 3 --core_methods 2 --nperm 1000 --seed 1 --out_prefix outputs/15_strength_p5e4_w250kb_core3
+```
 
-8) Chr5 validation: clustering, LD, bootstrap, placebo, sensitivity
-python scripts/26_chr5_haplotype_clusters.py --geno-npz data/03_snp_matrix.filtered.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M --out_prefix outputs/26_chr5_core_M_rerun
-python scripts/27_chr5_ld_lead_vs_haplotype.py --geno-npz data/03_snp_matrix.filtered.npz --chrom 5 --start 60250000 --end 60499999 --lead_pos 60278659 --k 7 --max_snps 120 --out_prefix outputs/27_chr5_ld_rerun
-python scripts/30_cluster_bootstrap_stability.py --geno-npz data/03_snp_matrix.filtered.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M --out_prefix outputs/30_boot_chr5_M_rerun --B 200 --frac 0.8 --seed 1
-python scripts/31_placebo_windows_genomewide.py --geno-npz data/03_snp_matrix.filtered.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M --window_bp 250000 --N 200 --seed 1 --max_snps 80 --out_prefix outputs/31_placebo_chr5_M_rerun_N200 --exclude_chr5_core
-python scripts/29_sensitivity_grid_chr5_core.py --glob "outputs/05_gwas_snp_*.tsv.gz" --glob "outputs/06_gwas_haplokmer_*.tsv.gz" --out_prefix outputs/29_sens_chr5_rerun --p_list 5e-4,2e-4,1e-4,5e-5 --window_list 250000,500000
+### 7) Core interval decomposition
+```bash
+python 24_core_hotspot_decomposition.py --glob "outputs/05_gwas_snp_*.tsv.gz" --glob "outputs/06_gwas_haplokmer_*.tsv.gz" --select p --p_thresh 5e-4 --window 250000 --core_traits 3 --core_methods 2 --out_prefix outputs/24_core_p5e4_core3
+```
 
-9) Tables + Supplementary Data S1 (Excel)
+### 8) Chr5 validation: clustering, LD, bootstrap, placebo, sensitivity
+```bash
+python 26_chr5_haplotype_clusters.py --geno-npz data/03_snp_matrix.filtered.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M --out_prefix outputs/26_chr5_core_M_rerun
+python 27_chr5_ld_lead_vs_haplotype.py --geno-npz data/03_snp_matrix.filtered.npz --chrom 5 --start 60250000 --end 60499999 --lead_pos 60278659 --k 7 --max_snps 120 --out_prefix outputs/27_chr5_ld_rerun
+python 30_cluster_bootstrap_stability.py --geno-npz data/03_snp_matrix.filtered.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M --out_prefix outputs/30_boot_chr5_M_rerun --B 200 --frac 0.8 --seed 1
+python 31_placebo_windows_genomewide.py --geno-npz data/03_snp_matrix.filtered.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M --window_bp 250000 --N 200 --seed 1 --max_snps 80 --out_prefix outputs/31_placebo_chr5_M_rerun_N200 --exclude_chr5_core
+python 29_sensitivity_grid_chr5_core.py --glob "outputs/05_gwas_snp_*.tsv.gz" --glob "outputs/06_gwas_haplokmer_*.tsv.gz" --out_prefix outputs/29_sens_chr5_rerun --p_list 5e-4,2e-4,1e-4,5e-5 --window_list 250000,500000
+```
 
-This repo includes table builder scripts. If you use the newer Table-1 builders (70_* / 71_*) and Supplementary S1 builder (40_*), ensure those scripts exist in scripts/.
+### 9) Optional targeted follow-up analyses added during revision
+These scripts were added to address reviewer questions on trait summary statistics, local effect size, omnibus haplotype testing, and *k*-sensitivity at the Chr5 interval.
 
-python scripts/40_build_supplementary_data_s1.py --out outputs/Supplementary_Data_S1_rerun.xlsx
+```bash
+python 33_trait_summary_heritability.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-gm data/01_pheno_grain_mold.tsv --pheno-anth data/01_pheno_anthracnose_clean.tsv --out_prefix outputs/33_trait_summary
+python 34_chr5_effect_size_pve.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M --chrom 5 --start 60250000 --end 60499999 --lead-pos 60278659 --clusters outputs/26_chr5_core_M_rerun_clusters.tsv --out_prefix outputs/34_chr5_effect_size_pve
+python 35_chr5_haplotype_omnibus_test.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M --chrom 5 --start 60250000 --end 60499999 --lead-pos 60278659 --k-snps 7 --min-ac 10 --out_prefix outputs/35_chr5_haplotype_omnibus_test
+python 36_chr5_k_sensitivity.py --geno-npz data/03_snp_matrix.filtered.npz --covar-npz data/04_covariates.npz --pheno-tsv data/01_pheno_grain_mold.tsv --trait M --chrom 5 --start 60250000 --end 60499999 --lead-pos 60278659 --k-list 5,7,9 --min-ac 10 --out_prefix outputs/36_chr5_k_sensitivity
+```
 
-Notes
+## Notes
 
-“Haplo-kmer” in this repo refers to k-SNP haplotype windows encoded from the SNP matrix (k=7), not read-derived k-mer counting.
+- “Haplo-kmer” in this repository refers to *k*-SNP haplotype windows encoded from the SNP matrix (*k* = 7 in the main analysis), **not** read-derived *k*-mer counting.
+- Operational thresholds (for example, *p* ≤ 5 × 10⁻⁴) are used to mitigate false negatives and stabilize convergence in a moderate-sized panel; they are **not** claimed as formal genome-wide significance cutoffs.
+- This repository distributes **analysis code only**. Third-party datasets must be obtained from their original sources under applicable terms. The standardized outputs used in the manuscript are provided with the submission as **Supplementary Data S1**.
 
-Operational thresholds (e.g., p<=5e-4) are used to mitigate false negatives and stabilize convergence in a moderate-sized panel; they are not claimed as formal genome-wide significance cutoffs.
-
-
-
-**Note:** This repository distributes analysis code only. Any third-party datasets must be obtained from their original sources under applicable terms. The authors’ standardized outputs used for the manuscript are provided with the submission as Supplementary Data S1.
